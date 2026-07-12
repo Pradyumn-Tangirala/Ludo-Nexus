@@ -137,7 +137,8 @@ io.on('connection', (socket) => {
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../frontend/dist')));
     
-    app.get('*', (req, res) => {
+    // Catch-all route to serve index.html for client-side routing
+    app.use((req, res) => {
         res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
     });
 }
