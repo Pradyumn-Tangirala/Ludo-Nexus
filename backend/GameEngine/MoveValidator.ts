@@ -9,16 +9,16 @@ export class MoveValidator {
         if (state.winner) return [];
         const tokens = state.players[color];
         const legalMoves: number[] = [];
-        
+
         for (let i = 0; i < tokens.length; i++) {
             const progress = tokens[i];
-            
+
             // Token is in base
             if (progress === -1) {
                 if (roll === EXTRA_TURN_VALUE) {
                     legalMoves.push(i);
                 }
-            } 
+            }
             // Token is active and hasn't finished
             else if (progress >= 0 && progress < WIN_PROGRESS) {
                 if (progress + roll <= WIN_PROGRESS) {
@@ -26,7 +26,7 @@ export class MoveValidator {
                 }
             }
         }
-        
+
         return legalMoves;
     }
 }

@@ -11,14 +11,14 @@ export class CaptureManager {
         if (BoardUtils.SAFE_ZONES.includes(absolutePos)) {
             return;
         }
-        
+
         let killed = false;
-        
+
         // Check all other players' tokens
         for (const [colorStr, tokens] of Object.entries(state.players)) {
             const color = colorStr as PlayerColor;
             if (color === activeColor) continue;
-            
+
             for (let i = 0; i < tokens.length; i++) {
                 const progress = tokens[i];
                 if (progress >= 0 && progress <= 50) {
@@ -31,7 +31,7 @@ export class CaptureManager {
                 }
             }
         }
-        
+
         // Grant extra turn if a kill happened
         if (killed) {
             state.extraTurn = true;

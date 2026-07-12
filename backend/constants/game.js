@@ -11,5 +11,5 @@ module.exports = {
     TOKENS_PER_PLAYER,
     EXTRA_TURN_VALUE,
     WIN_PROGRESS,
-    ROOM_CODE_LENGTH
+    ROOM_CODE_LENGTH,
 };

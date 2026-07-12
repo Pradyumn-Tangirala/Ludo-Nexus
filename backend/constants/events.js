@@ -10,7 +10,7 @@ const SOCKET_EVENTS = {
     MOVE_TOKEN: 'move_token',
     REMATCH: 'rematch',
     SEND_REACTION: 'send_reaction',
-    REACTION: 'reaction'
+    REACTION: 'reaction',
 };
 
 module.exports = { SOCKET_EVENTS };

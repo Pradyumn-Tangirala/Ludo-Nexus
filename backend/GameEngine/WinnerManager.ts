@@ -9,7 +9,7 @@ export class WinnerManager {
         // If a token reached WIN_PROGRESS, standard Ludo rules often give an extra turn.
         if (newProgress === WIN_PROGRESS) {
             state.extraTurn = true;
-            if (state.players[color].every(p => p === WIN_PROGRESS)) {
+            if (state.players[color].every((p) => p === WIN_PROGRESS)) {
                 state.winner = color;
             }
         }
