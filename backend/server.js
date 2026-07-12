@@ -94,7 +94,7 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
     socket.on(SOCKET_EVENTS.START_GAME, ({ roomId }, callback) => {
         try {
             const sessionId = socketSessionMap.get(socket.id);
-            const room = roomManager.startGame(roomId, sessionId);
+            const room = roomManager.startGame(roomId, sessionId, io);
             if (typeof callback === 'function') callback({ success: true });
 
             // Broadcast full state (now includes gameState from LudoEngine)
@@ -115,7 +115,7 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
             }
             lastRollTimes.set(sessionId, now);
 
-            const { room, roll } = roomManager.rollDice(roomId, sessionId);
+            const { room, roll } = roomManager.rollDice(roomId, sessionId, io);
             if (typeof callback === 'function') callback({ success: true, roll });
             io.to(roomId).emit(SOCKET_EVENTS.ROOM_UPDATE, roomManager.cleanRoomForClient(room));
         } catch (error) {
@@ -127,7 +127,7 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
     socket.on(SOCKET_EVENTS.MOVE_TOKEN, ({ roomId, tokenIndex }, callback) => {
         try {
             const sessionId = socketSessionMap.get(socket.id);
-            const room = roomManager.moveToken(roomId, sessionId, tokenIndex);
+            const room = roomManager.moveToken(roomId, sessionId, tokenIndex, io);
             if (typeof callback === 'function') callback({ success: true });
             io.to(roomId).emit(SOCKET_EVENTS.ROOM_UPDATE, roomManager.cleanRoomForClient(room));
         } catch (error) {
@@ -139,7 +139,7 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
     socket.on(SOCKET_EVENTS.REMATCH, ({ roomId }, callback) => {
         try {
             const sessionId = socketSessionMap.get(socket.id);
-            const room = roomManager.rematch(roomId, sessionId);
+            const room = roomManager.rematch(roomId, sessionId, io);
             if (typeof callback === 'function') callback({ success: true });
             io.to(roomId).emit(SOCKET_EVENTS.ROOM_UPDATE, roomManager.cleanRoomForClient(room));
         } catch (error) {

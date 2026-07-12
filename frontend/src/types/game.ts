@@ -3,8 +3,13 @@ export type PlayerColor = 'red' | 'green' | 'yellow' | 'blue';
 export interface PlayerData {
   id: string;
   name: string;
-  color: PlayerColor;
+  color: PlayerColor | null;
   isHost: boolean;
+  isReady: boolean;
+  avatar: string;
+  status: 'online' | 'offline' | 'away';
+  role: 'player' | 'spectator';
+  disconnectDeadline: number | null;
 }
 
 export interface GameState {
@@ -15,6 +20,7 @@ export interface GameState {
   awaitingMove: boolean;
   extraTurn: boolean;
   winner: PlayerColor | null;
+  turnDeadline: number | null;
 }
 
 export interface Room {

@@ -27,16 +27,23 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
   const [floatingEmojis, setFloatingEmojis] = useState<{id: string, emoji: string, left: number, bottom: number}[]>([]);
   const [showEmojiMenu, setShowEmojiMenu] = useState(false);
   
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 100);
+    return () => clearInterval(timer);
+  }, []);
+  
   const { playClick, playDiceRoll, playCapture, playVictory } = useSoundEffects();
   
   if (!gameState) return <div>Loading game state...</div>;
 
   const me = room.players.find(p => p.id === mySessionId);
-  const isHost = me?.isHost;
   const myColor = me?.color;
+  const isSpectator = me?.role === 'spectator';
   
-  const isMyTurn = gameState.turn === myColor;
-  const canRoll = isMyTurn && !gameState.awaitingMove && !gameState.winner && !isVisualRolling;
+  const canRoll = gameState.turn === myColor && !gameState.awaitingMove && !gameState.winner && !isVisualRolling && !isSpectator;
+  const isMyTurn = gameState.turn === myColor && !isSpectator;
 
   useEffect(() => {
     if (!socket) return;
@@ -162,7 +169,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
       blue: 'linear-gradient(135deg, #172554 0%, #0f172a 100%)',
     };
     
-    document.body.style.background = bgColors[displayTurn] || 'var(--bg-gradient)';
+    document.body.style.background = bgColors[displayTurn as keyof typeof bgColors] || 'var(--bg-gradient)';
     document.body.style.transition = 'background 1s ease-in-out';
     
     return () => {
@@ -262,8 +269,14 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', paddingBottom: '80px', position: 'relative' }}>
+    <div className="glass-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '600px', position: 'relative', overflow: 'hidden' }}>
       
+      {isSpectator && (
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', background: 'rgba(0,0,0,0.5)', padding: '0.5rem', textAlign: 'center', color: 'white', fontWeight: 'bold', zIndex: 10, backdropFilter: 'blur(5px)' }}>
+          Spectating Game
+        </div>
+      )}
+
       {/* Floating Emojis */}
       <AnimatePresence>
         {floatingEmojis.map(emojiObj => (
@@ -326,7 +339,9 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
               </p>
               
               <div style={{ marginTop: '3rem' }}>
-                {isHost ? (
+                {isSpectator ? (
+                  <p style={{ color: 'var(--text-secondary)' }}>Game over. Waiting for host...</p>
+                ) : me?.isHost ? (
                   <button className="btn btn-primary" onClick={handleRematch} style={{ padding: '1rem 3rem', fontSize: '1.2rem' }}>
                     <RotateCcw size={20} /> Play Again
                   </button>
@@ -360,21 +375,106 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
         justifyContent: 'space-between',
         zIndex: 50
       }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          {room.players.map(p => {
+            const color = p.color;
+            const isActive = gameState.turn === color;
+            
+            let disconnectProgress = 0;
+            let showDisconnect = false;
+            if (p.status === 'offline' && p.disconnectDeadline) {
+              showDisconnect = true;
+              const remaining = Math.max(0, p.disconnectDeadline - now);
+              disconnectProgress = (remaining / 60000) * 100;
+            }
+
+            const turnRemaining = gameState.turnDeadline ? Math.max(0, gameState.turnDeadline - now) : 0;
+            const turnProgress = gameState.turnDeadline ? (turnRemaining / 30000) * 100 : 0;
+
+            return (
+              <div 
+                key={color}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  opacity: isActive ? 1 : 0.5,
+                  transform: isActive ? 'scale(1.1)' : 'scale(1)',
+                  transition: 'all 0.3s'
+                }}
+              >
+                <div style={{ position: 'relative' }}>
+                  <div 
+                    style={{
+                      width: '50px', height: '50px',
+                      borderRadius: '50%',
+                      background: color,
+                      border: isActive ? '4px solid white' : '2px solid transparent',
+                      boxShadow: isActive ? `0 0 15px ${color}` : 'none',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'white', fontWeight: 'bold', fontSize: '1.2rem',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {p.avatar ? (
+                      <img 
+                        src={`https://api.dicebear.com/7.x/${p.avatar.split(':')[0]}/svg?seed=${p.avatar.split(':')[1]}&backgroundColor=transparent`} 
+                        alt="avatar" 
+                        style={{ width: '90%', height: '90%' }} 
+                      />
+                    ) : (
+                      p.name.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  
+                  {/* AFK Timer Bar */}
+                  {isActive && turnRemaining > 0 && (
+                    <div style={{ position: 'absolute', bottom: '-10px', left: 0, width: '100%', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', background: turnProgress < 25 ? '#ef4444' : '#10b981', width: `${turnProgress}%`, transition: 'width 0.1s linear' }} />
+                    </div>
+                  )}
+                  
+                  {/* Disconnect Countdown Ring */}
+                  {showDisconnect && (
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', borderRadius: '50%', border: '4px solid rgba(239, 68, 68, 0.3)', pointerEvents: 'none' }}>
+                       <svg viewBox="0 0 100 100" style={{ position: 'absolute', top: '-4px', left: '-4px', width: '100%', height: '100%', transform: 'rotate(-90deg)', overflow: 'visible' }}>
+                         <circle cx="50" cy="50" r="25" fill="none" stroke="#ef4444" strokeWidth="8" strokeDasharray="157" strokeDashoffset={157 - (157 * disconnectProgress / 100)} style={{ transition: 'stroke-dashoffset 0.1s linear' }} />
+                       </svg>
+                       <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', color: 'white', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                         {Math.ceil((p.disconnectDeadline! - now) / 1000)}s
+                       </div>
+                    </div>
+                  )}
+                </div>
+                
+                <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{p.name} {p.id === mySessionId && '(You)'}</span>
+              </div>
+            );
+          })}
+        </div>
+        
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div>
-            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Current Turn</div>
-            <div style={{ 
-              fontSize: '1.2rem', 
-              fontWeight: 'bold', 
-              color: displayTurn === 'red' ? '#ef4444' : 
-                     displayTurn === 'green' ? '#10b981' : 
-                     displayTurn === 'yellow' ? '#eab308' : '#3b82f6',
-              textTransform: 'capitalize'
-            }}>
-              {getPlayerNameByColor(displayTurn)} ({displayTurn}) {displayTurn === myColor ? '(You)' : ''}
-            </div>
-          </div>
-          
+          {(!gameState.winner && !isSpectator) && (
+            <button 
+              className={`btn ${canRoll ? 'btn-primary' : 'btn-secondary'}`}
+              disabled={!canRoll || rolling || isVisualRolling}
+              onClick={handleRollDice}
+              style={{
+                width: 'auto',
+                padding: '0.8rem 1.5rem',
+                fontSize: '1.2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.8rem'
+              }}
+            >
+              <Dices />
+              {rolling || isVisualRolling ? 'Rolling...' : canRoll ? 'Roll Dice' : 'Wait for turn'}
+            </button>
+          )}
+
           <div style={{ position: 'relative' }}>
             <button 
               onClick={() => setShowEmojiMenu(!showEmojiMenu)}

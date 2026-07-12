@@ -10,5 +10,9 @@ export const SOCKET_EVENTS = {
     MOVE_TOKEN: 'move_token',
     REMATCH: 'rematch',
     SEND_REACTION: 'send_reaction',
-    REACTION: 'reaction'
+    REACTION: 'reaction',
+    TOGGLE_READY: 'toggle_ready',
+    SET_AVATAR: 'set_avatar',
+    SET_STATUS: 'set_status',
+    PING: 'ping'
 };

@@ -29,6 +29,7 @@ export class LudoEngine {
             extraTurn: false,
             winner: null,
             rollCount: 0,
+            turnDeadline: null,
         };
     }
 
@@ -91,6 +92,20 @@ export class LudoEngine {
             WinnerManager.evaluateProgress(draft, color, newProgress);
 
             // Advance Turn
+            TurnManager.nextTurn(draft, this.turnOrder);
+        });
+
+        return { success: true, state: this.state };
+    }
+
+    skipTurn(color: PlayerColor): { success: boolean; state: GameState } {
+        this.state = produce(this.state, (draft) => {
+            if (color !== draft.turn) {
+                throw new Error(`It is not ${color}'s turn.`);
+            }
+            draft.awaitingMove = false;
+            draft.extraTurn = false;
+            draft.lastRoll = null;
             TurnManager.nextTurn(draft, this.turnOrder);
         });
 

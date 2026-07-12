@@ -8,4 +8,5 @@ export interface GameState {
     extraTurn: boolean;
     winner: PlayerColor | null;
     rollCount: number;
+    turnDeadline: number | null;
 }
