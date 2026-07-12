@@ -1,9 +1,11 @@
+const { TRACK_LENGTH, WIN_PROGRESS, EXTRA_TURN_VALUE, TOKENS_PER_PLAYER } = require('./constants/game');
+
 class LudoEngine {
     constructor(activeColors = ['red', 'green', 'yellow', 'blue']) {
         this.board = {
             // Absolute board indices that are safe (start tiles and star tiles)
             safeZones: [0, 8, 13, 21, 26, 34, 39, 47],
-            trackLength: 52
+            trackLength: TRACK_LENGTH
         };
         
         // Offset for each color to map relative progress to absolute board position
@@ -16,12 +18,13 @@ class LudoEngine {
         
         this.turnOrder = activeColors;
         
+        const defaultTokens = Array(TOKENS_PER_PLAYER).fill(-1);
         this.state = {
             players: {
-                red: [-1, -1, -1, -1],
-                green: [-1, -1, -1, -1],
-                yellow: [-1, -1, -1, -1],
-                blue: [-1, -1, -1, -1]
+                red: [...defaultTokens],
+                green: [...defaultTokens],
+                yellow: [...defaultTokens],
+                blue: [...defaultTokens]
             },
             turn: this.turnOrder[0],
             lastRoll: null,
@@ -42,12 +45,12 @@ class LudoEngine {
             throw new Error("Must move a token before rolling again.");
         }
         
-        const roll = Math.floor(Math.random() * 6) + 1;
+        const roll = Math.floor(Math.random() * EXTRA_TURN_VALUE) + 1;
         this.state.lastRoll = roll;
         this.state.rollCount += 1;
         this.state.awaitingMove = true;
         
-        if (roll === 6) {
+        if (roll === EXTRA_TURN_VALUE) {
             this.state.extraTurn = true;
         } else {
             this.state.extraTurn = false; // Reset if not a 6
@@ -79,13 +82,13 @@ class LudoEngine {
             
             // Token is in base
             if (progress === -1) {
-                if (roll === 6) {
+                if (roll === EXTRA_TURN_VALUE) {
                     legalMoves.push(i);
                 }
             } 
             // Token is active and hasn't finished
-            else if (progress >= 0 && progress < 56) {
-                if (progress + roll <= 56) {
+            else if (progress >= 0 && progress < WIN_PROGRESS) {
+                if (progress + roll <= WIN_PROGRESS) {
                     legalMoves.push(i);
                 }
             }
@@ -118,7 +121,7 @@ class LudoEngine {
         const currentProgress = this.state.players[color][tokenIndex];
         
         // Moving out of base
-        if (currentProgress === -1 && roll === 6) {
+        if (currentProgress === -1 && roll === EXTRA_TURN_VALUE) {
             this.state.players[color][tokenIndex] = 0;
         } 
         // Standard move
@@ -137,10 +140,10 @@ class LudoEngine {
         // Finalize Move
         this.state.awaitingMove = false;
         
-        // If a token reached 56, standard Ludo rules often give an extra turn. We'll grant it.
-        if (newProgress === 56) {
+        // If a token reached WIN_PROGRESS, standard Ludo rules often give an extra turn. We'll grant it.
+        if (newProgress === WIN_PROGRESS) {
             this.state.extraTurn = true;
-            if (this.state.players[color].every(p => p === 56)) {
+            if (this.state.players[color].every(p => p === WIN_PROGRESS)) {
                 this.state.winner = color;
             }
         }

@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSocket } from '../context/SocketContext';
 import { Dices, LogIn, Plus, Shield } from 'lucide-react';
+import { SOCKET_EVENTS } from '../constants/events';
+import { ROOM_CODE_LENGTH } from '../constants/game';
 
 const Landing = () => {
   const [username, setUsername] = useState('');
@@ -28,7 +30,7 @@ const Landing = () => {
     
     const savedSessionId = sessionStorage.getItem('ludo_session_id');
     if (savedSessionId) {
-      socket.emit('reconnect_session', { sessionId: savedSessionId }, (response) => {
+      socket.emit(SOCKET_EVENTS.RECONNECT_SESSION, { sessionId: savedSessionId }, (response) => {
         if (response.success) {
           navigate(`/room/${response.room.id}`, { state: { room: response.room } });
         } else {
@@ -48,7 +50,7 @@ const Landing = () => {
     }
     setError('');
     
-    socket.emit('create_room', { username: username.trim() }, (response) => {
+    socket.emit(SOCKET_EVENTS.CREATE_ROOM, { username: username.trim() }, (response) => {
       if (response.success) {
         sessionStorage.setItem('ludo_session_id', response.sessionId);
         navigate(`/room/${response.room.id}`, { state: { room: response.room } });
@@ -63,13 +65,13 @@ const Landing = () => {
       setError('Please enter a username');
       return;
     }
-    if (!roomCode.trim() || roomCode.length !== 6) {
-      setError('Please enter a valid 6-character room code');
+    if (!roomCode.trim() || roomCode.length !== ROOM_CODE_LENGTH) {
+      setError(`Please enter a valid ${ROOM_CODE_LENGTH}-character room code`);
       return;
     }
     setError('');
     
-    socket.emit('join_room', { roomId: roomCode.trim(), username: username.trim() }, (response) => {
+    socket.emit(SOCKET_EVENTS.JOIN_ROOM, { roomId: roomCode.trim(), username: username.trim() }, (response) => {
       if (response.success) {
         sessionStorage.setItem('ludo_session_id', response.sessionId);
         navigate(`/room/${response.room.id}`, { state: { room: response.room } });
@@ -158,7 +160,7 @@ const Landing = () => {
                   placeholder="e.g. A1B2C3"
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                  maxLength={6}
+                  maxLength={ROOM_CODE_LENGTH}
                   style={{ textTransform: 'uppercase', letterSpacing: '2px', textAlign: 'center', fontWeight: 'bold' }}
                 />
               </div>

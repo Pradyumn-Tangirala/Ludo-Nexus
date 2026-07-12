@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from "../context/SocketContext";
 import { Users, Copy, CheckCircle, LogOut, Crown, WifiOff } from 'lucide-react';
 import GameView from "../pages/GameView";
+import { SOCKET_EVENTS } from '../constants/events';
 
 const Lobby = () => {
   const { roomId } = useParams();
@@ -26,10 +27,10 @@ const Lobby = () => {
       setRoom(updatedRoom);
     };
 
-    socket.on('room_update', handleRoomUpdate);
+    socket.on(SOCKET_EVENTS.ROOM_UPDATE, handleRoomUpdate);
 
     return () => {
-      socket.off('room_update', handleRoomUpdate);
+      socket.off(SOCKET_EVENTS.ROOM_UPDATE, handleRoomUpdate);
     };
   }, [socket, navigate, room]);
 
@@ -50,7 +51,7 @@ const Lobby = () => {
   };
 
   const startGame = () => {
-    socket.emit('start_game', { roomId }, (response) => {
+    socket.emit(SOCKET_EVENTS.START_GAME, { roomId }, (response) => {
       if (!response.success) {
         alert(response.message);
       }

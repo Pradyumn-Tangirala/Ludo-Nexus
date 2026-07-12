@@ -8,6 +8,8 @@ import { Dices, RotateCcw, Smile } from 'lucide-react';
 import Dice from '../components/Dice';
 import { Room, PlayerColor } from '../types/game';
 import { ReactionPayload } from '../types/socket';
+import { WIN_PROGRESS, EXTRA_TURN_VALUE } from '../constants/game';
+import { SOCKET_EVENTS } from '../constants/events';
 
 interface GameViewProps {
   room: Room;
@@ -70,8 +72,8 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
       }, 3000);
     };
 
-    socket.on('reaction', handleReaction);
-    return () => socket.off('reaction', handleReaction);
+    socket.on(SOCKET_EVENTS.REACTION, handleReaction);
+    return () => socket.off(SOCKET_EVENTS.REACTION, handleReaction);
   }, [socket, room.players]);
   
   const prevRollCount = React.useRef(gameState?.rollCount || 0);
@@ -114,9 +116,9 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
     
     for (let i = 0; i < tokens.length; i++) {
         const progress = tokens[i];
-        if (progress === -1 && roll === 6) {
+        if (progress === -1 && roll === EXTRA_TURN_VALUE) {
             moves.push(i);
-        } else if (progress >= 0 && progress < 56 && progress + roll <= 56) {
+        } else if (progress >= 0 && progress < WIN_PROGRESS && progress + roll <= WIN_PROGRESS) {
             moves.push(i);
         }
     }
@@ -128,7 +130,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
   const handleRollDice = () => {
     if (!canRoll) return;
     setRolling(true);
-    socket.emit('roll_dice', { roomId: room.id }, (response) => {
+    socket.emit(SOCKET_EVENTS.ROLL_DICE, { roomId: room.id }, (response) => {
       setRolling(false);
       if (!response.success) {
         console.error(response.message);
@@ -139,7 +141,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
   const handleMoveToken = (color: PlayerColor, tokenIndex: number) => {
     if (color !== myColor || !legalMoves.includes(tokenIndex)) return;
     
-    socket.emit('move_token', { roomId: room.id, tokenIndex }, (response) => {
+    socket.emit(SOCKET_EVENTS.MOVE_TOKEN, { roomId: room.id, tokenIndex }, (response) => {
       if (!response.success) {
         console.error(response.message);
       }
@@ -147,12 +149,12 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
   };
   
   const handleRematch = () => {
-    socket.emit('rematch', { roomId: room.id });
+    socket.emit(SOCKET_EVENTS.REMATCH, { roomId: room.id });
   };
 
   const sendReaction = (emoji) => {
     setShowEmojiMenu(false);
-    socket.emit('send_reaction', { roomId: room.id, emoji });
+    socket.emit(SOCKET_EVENTS.SEND_REACTION, { roomId: room.id, emoji });
   };
 
   const renderTokens = () => {

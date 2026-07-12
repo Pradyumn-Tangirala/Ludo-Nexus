@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { WIN_PROGRESS } from '../constants/game';
 
 const Token = ({ color, x, y, offset, isMovable, onClick, progress }) => {
   const left = `calc(${(x * 100) / 15}% + ${offset.dx}px)`;
@@ -18,7 +19,7 @@ const Token = ({ color, x, y, offset, isMovable, onClick, progress }) => {
       opacity: 1
   };
   
-  if (progress === 56) {
+  if (progress === WIN_PROGRESS) {
       // Reached home! Shrink down and fade out
       animationState = {
           left,
@@ -42,7 +43,7 @@ const Token = ({ color, x, y, offset, isMovable, onClick, progress }) => {
           stiffness: 150, 
           damping: 15,
           opacity: { duration: 0.4 },
-          scale: { duration: progress === 56 ? 1 : 0.2 }
+          scale: { duration: progress === WIN_PROGRESS ? 1 : 0.2 }
       }}
       style={{
         position: 'absolute',

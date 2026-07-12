@@ -1,3 +1,5 @@
+import { TRACK_LENGTH, WIN_PROGRESS } from '../constants/game';
+
 // Absolute board positions (0-51) mapped to [x, y] coordinates
 export const ABSOLUTE_PATH = [
   [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 5], [6, 4], [6, 3], [6, 2], [6, 1],
@@ -9,7 +11,7 @@ export const ABSOLUTE_PATH = [
 ];
 
 // Home stretches for each color (progress 51-56). 56 is the center home.
-export const HOME_STRETCHES = {
+export const HOME_STRETCHES: Record<string, number[][]> = {
   red: [[1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7]],
   green: [[7, 1], [7, 2], [7, 3], [7, 4], [7, 5], [7, 6]],
   yellow: [[13, 7], [12, 7], [11, 7], [10, 7], [9, 7], [8, 7]],
@@ -17,14 +19,14 @@ export const HOME_STRETCHES = {
 };
 
 // Base coordinates for tokens waiting to enter (-1)
-export const BASES = {
+export const BASES: Record<string, number[][]> = {
   red: [[1.5, 1.5], [3.5, 1.5], [1.5, 3.5], [3.5, 3.5]],
   green: [[10.5, 1.5], [12.5, 1.5], [10.5, 3.5], [12.5, 3.5]],
   yellow: [[10.5, 10.5], [12.5, 10.5], [10.5, 12.5], [12.5, 12.5]],
   blue: [[1.5, 10.5], [3.5, 10.5], [1.5, 12.5], [3.5, 12.5]]
 };
 
-export const COLOR_OFFSETS = {
+export const COLOR_OFFSETS: Record<string, number> = {
   red: 0,
   green: 13,
   yellow: 26,
@@ -33,36 +35,41 @@ export const COLOR_OFFSETS = {
 
 /**
  * Returns {x, y} coordinate for a given token.
- * @param {string} color The player's color
- * @param {number} progress The token's relative progress (-1 to 56)
- * @param {number} tokenIndex The index (0-3) of the token
- * @param {object} players Object containing all players to calculate overlaps
+ * @param color The player's color
+ * @param progress The token's relative progress (-1 to WIN_PROGRESS)
+ * @param tokenIndex The index (0-3) of the token
+ * @param players Object containing all players to calculate overlaps
  */
-export const getCoordinates = (color, progress, tokenIndex, players = null) => {
+export const getCoordinates = (
+  color: string, 
+  progress: number, 
+  tokenIndex: number, 
+  players: Record<string, number[]> | null = null
+) => {
   let coord = [0, 0];
   
   if (progress === -1) {
     coord = BASES[color][tokenIndex];
-  } else if (progress >= 0 && progress <= 50) {
-    const absPos = (COLOR_OFFSETS[color] + progress) % 52;
+  } else if (progress >= 0 && progress <= TRACK_LENGTH - 2) {
+    const absPos = (COLOR_OFFSETS[color] + progress) % TRACK_LENGTH;
     coord = ABSOLUTE_PATH[absPos];
-  } else if (progress >= 51 && progress <= 56) {
-    coord = HOME_STRETCHES[color][progress - 51];
+  } else if (progress >= TRACK_LENGTH - 1 && progress <= WIN_PROGRESS) {
+    coord = HOME_STRETCHES[color][progress - (TRACK_LENGTH - 1)];
   }
   
   // Calculate visual offset if multiple tokens share the exact same tile on the path
   let offset = { dx: 0, dy: 0 };
   if (players && progress >= 0) {
     // Find all tokens on this exact same absolute coordinate
-    const sharingTokens = [];
+    const sharingTokens: {color: string, index: number}[] = [];
     for (const [pColor, pData] of Object.entries(players)) {
       if (!pData) continue;
       pData.forEach((tokProgress, tokIdx) => {
         if (tokProgress === progress && pColor === color) {
             sharingTokens.push({ color: pColor, index: tokIdx });
-        } else if (tokProgress >= 0 && tokProgress <= 50 && progress <= 50) {
-            const myAbs = (COLOR_OFFSETS[color] + progress) % 52;
-            const theirAbs = (COLOR_OFFSETS[pColor] + tokProgress) % 52;
+        } else if (tokProgress >= 0 && tokProgress <= TRACK_LENGTH - 2 && progress <= TRACK_LENGTH - 2) {
+            const myAbs = (COLOR_OFFSETS[color] + progress) % TRACK_LENGTH;
+            const theirAbs = (COLOR_OFFSETS[pColor] + tokProgress) % TRACK_LENGTH;
             if (myAbs === theirAbs) {
                 sharingTokens.push({ color: pColor, index: tokIdx });
             }

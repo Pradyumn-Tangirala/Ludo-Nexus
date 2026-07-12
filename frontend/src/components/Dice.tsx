@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
+import { EXTRA_TURN_VALUE } from '../constants/game';
 
 interface DiceProps {
   roll: number | null;
@@ -27,7 +28,7 @@ const Dice: React.FC<DiceProps> = ({ roll, rollCount, onVisualRollEnd }) => {
       
       // Rapidly change number
       interval = setInterval(() => {
-        setVisualRoll(Math.floor(Math.random() * 6) + 1);
+        setVisualRoll(Math.floor(Math.random() * EXTRA_TURN_VALUE) + 1);
       }, 50);
 
       // Stop after 500ms and show actual roll
@@ -40,7 +41,7 @@ const Dice: React.FC<DiceProps> = ({ roll, rollCount, onVisualRollEnd }) => {
 
       return () => clearInterval(interval);
     } else {
-        setVisualRoll(roll || 6); // default to 6 if no roll yet
+        setVisualRoll(roll || EXTRA_TURN_VALUE); // default to EXTRA_TURN_VALUE if no roll yet
     }
   }, [rollCount, roll, controls, onVisualRollEnd]);
 

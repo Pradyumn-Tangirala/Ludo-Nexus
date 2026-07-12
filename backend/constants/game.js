@@ -1,0 +1,15 @@
+const TRACK_LENGTH = 52;
+const HOME_LENGTH = 6;
+const TOKENS_PER_PLAYER = 4;
+const EXTRA_TURN_VALUE = 6;
+const WIN_PROGRESS = 56;
+const ROOM_CODE_LENGTH = 6;
+
+module.exports = {
+    TRACK_LENGTH,
+    HOME_LENGTH,
+    TOKENS_PER_PLAYER,
+    EXTRA_TURN_VALUE,
+    WIN_PROGRESS,
+    ROOM_CODE_LENGTH
+};
