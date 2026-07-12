@@ -27,7 +27,8 @@ class LudoEngine {
             lastRoll: null,
             awaitingMove: false,
             extraTurn: false,
-            winner: null
+            winner: null,
+            rollCount: 0
         };
     }
 
@@ -43,6 +44,7 @@ class LudoEngine {
         
         const roll = Math.floor(Math.random() * 6) + 1;
         this.state.lastRoll = roll;
+        this.state.rollCount += 1;
         this.state.awaitingMove = true;
         
         if (roll === 6) {

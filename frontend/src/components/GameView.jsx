@@ -5,11 +5,13 @@ import Token from './Token';
 import { getCoordinates } from '../utils/ludoCoordinates';
 import { useSocket } from '../SocketContext';
 import { Dices, RotateCcw, Smile } from 'lucide-react';
+import Dice from './Dice';
 
 const GameView = ({ room, mySessionId }) => {
   const socket = useSocket();
   const gameState = room.gameState;
   const [rolling, setRolling] = useState(false);
+  const [isVisualRolling, setIsVisualRolling] = useState(false);
   const [floatingEmojis, setFloatingEmojis] = useState([]);
   const [showEmojiMenu, setShowEmojiMenu] = useState(false);
   
@@ -20,7 +22,7 @@ const GameView = ({ room, mySessionId }) => {
   const myColor = me?.color;
   
   const isMyTurn = gameState.turn === myColor;
-  const canRoll = isMyTurn && !gameState.awaitingMove && !gameState.winner;
+  const canRoll = isMyTurn && !gameState.awaitingMove && !gameState.winner && !isVisualRolling;
 
   useEffect(() => {
     if (!socket) return;
@@ -62,10 +64,17 @@ const GameView = ({ room, mySessionId }) => {
 
     socket.on('reaction', handleReaction);
     return () => socket.off('reaction', handleReaction);
-  }, [socket]);
+  }, [socket, room.players]);
   
+  // Watch for new rolls to block interactions while visually rolling
+  useEffect(() => {
+      if (gameState?.rollCount > 0) {
+          setIsVisualRolling(true);
+      }
+  }, [gameState?.rollCount]);
+
   const getLegalMoves = () => {
-    if (!isMyTurn || !gameState.awaitingMove || !gameState.lastRoll || gameState.winner) return [];
+    if (!isMyTurn || !gameState.awaitingMove || !gameState.lastRoll || gameState.winner || isVisualRolling) return [];
     
     const tokens = gameState.players[myColor];
     const roll = gameState.lastRoll;
@@ -129,6 +138,7 @@ const GameView = ({ room, mySessionId }) => {
             y={y}
             offset={offset}
             isMovable={isMovable}
+            progress={progress}
             onClick={() => handleMoveToken(color, idx)}
           />
         );
@@ -297,16 +307,11 @@ const GameView = ({ room, mySessionId }) => {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {gameState.lastRoll && (
-            <div style={{ 
-              width: '40px', height: '40px', 
-              background: 'white', color: '#333', 
-              borderRadius: '8px', display: 'flex', 
-              alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.5rem', fontWeight: 'bold',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-            }}>
-              {gameState.lastRoll}
-            </div>
+            <Dice 
+              roll={gameState.lastRoll} 
+              rollCount={gameState.rollCount} 
+              onVisualRollEnd={() => setIsVisualRolling(false)} 
+            />
           )}
           
           <button 
