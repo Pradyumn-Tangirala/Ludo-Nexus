@@ -12,6 +12,7 @@ interface DiceProps {
 const Dice: React.FC<DiceProps> = ({ roll, rollCount, onVisualRollEnd, playDiceSound }) => {
   const [visualRoll, setVisualRoll] = useState(roll || 1);
   const controls = useAnimation();
+  const prevRollCount = React.useRef(0);
 
   // Face rotation mappings to ensure the correct number faces front (rotateX, rotateY)
   const faceRotations: Record<number, { x: number, y: number }> = {
@@ -24,7 +25,8 @@ const Dice: React.FC<DiceProps> = ({ roll, rollCount, onVisualRollEnd, playDiceS
   };
 
   useEffect(() => {
-    if (rollCount > 0 && roll) {
+    if (rollCount > prevRollCount.current && roll) {
+      prevRollCount.current = rollCount;
       if (playDiceSound) playDiceSound();
       
       const targetRotation = faceRotations[roll] || faceRotations[1];
