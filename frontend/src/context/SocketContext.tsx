@@ -12,11 +12,13 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Use environment variable or default to the same origin (for production) or localhost:3001 (for dev fallback)
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '/');
+    const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL || ((import.meta as any).env?.DEV ? 'http://localhost:3001' : '/');
     const newSocket = io(backendUrl);
     setSocket(newSocket);
 
-    return () => newSocket.close();
+    return () => {
+      newSocket.close();
+    };
   }, []);
 
   return (

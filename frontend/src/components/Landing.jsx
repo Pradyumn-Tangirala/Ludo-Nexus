@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSocket } from '../context/SocketContext';
@@ -20,7 +20,9 @@ const Landing = () => {
   useEffect(() => {
     const code = searchParams.get('code');
     if (code) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRoomCode(code.toUpperCase());
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsJoining(true);
     }
   }, [searchParams]);
@@ -39,6 +41,7 @@ const Landing = () => {
         }
       });
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsReconnecting(false);
     }
   }, [socket, navigate]);

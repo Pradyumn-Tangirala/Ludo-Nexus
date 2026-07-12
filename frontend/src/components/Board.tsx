@@ -1,6 +1,5 @@
 import React, { ReactNode } from 'react';
-import './Board.css';
-import { PlayerData, PlayerColor } from '../types/game';
+import { PlayerData, PlayerColor, GameState } from '../types/game';
 
 interface BoardProps {
   children?: ReactNode;

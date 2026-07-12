@@ -23,6 +23,7 @@ describe('RollManager', () => {
             extraTurn: false,
             winner: null,
             rollCount: 0,
+            turnDeadline: null,
         };
     });
 

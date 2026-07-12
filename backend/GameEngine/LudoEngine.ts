@@ -112,6 +112,12 @@ export class LudoEngine {
         return { success: true, state: this.state };
     }
 
+    setTurnDeadline(deadline: number | null): void {
+        this.state = produce(this.state, (draft) => {
+            draft.turnDeadline = deadline;
+        });
+    }
+
     getState(): GameState {
         return this.state;
     }

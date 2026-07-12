@@ -20,6 +20,7 @@ describe('MoveValidator', () => {
             extraTurn: false,
             winner: null,
             rollCount: 0,
+            turnDeadline: null,
         };
     });
 

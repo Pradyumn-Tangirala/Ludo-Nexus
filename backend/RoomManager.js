@@ -209,7 +209,7 @@ class RoomManager {
         if (!room || !room.engine) return;
 
         this._clearTurnTimeout(roomId);
-        room.engine.state.turnDeadline = Date.now() + this.TURN_TIMEOUT;
+        room.engine.setTurnDeadline(Date.now() + this.TURN_TIMEOUT);
 
         const timeoutId = setTimeout(() => {
             if (room && room.engine && room.status === 'playing') {

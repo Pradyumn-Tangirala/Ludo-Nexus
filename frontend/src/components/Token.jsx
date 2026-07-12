@@ -1,5 +1,4 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { WIN_PROGRESS } from '../constants/game';
 
 const Token = ({ color, x, y, offset, isMovable, onClick, progress }) => {

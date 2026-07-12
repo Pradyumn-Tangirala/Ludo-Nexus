@@ -38,7 +38,7 @@ const Lobby: React.FC = () => {
     if (!socket) return;
     const interval = setInterval(() => {
       const start = Date.now();
-      socket.emit(SOCKET_EVENTS.PING, start, (clientTime: number) => {
+      socket?.emit(SOCKET_EVENTS.PING, start, (clientTime: number) => {
         setPing(Date.now() - clientTime);
       });
     }, 3000);
@@ -49,8 +49,8 @@ const Lobby: React.FC = () => {
   useEffect(() => {
     if (!socket || !roomId) return;
     
-    const handleFocus = () => socket.emit(SOCKET_EVENTS.SET_STATUS, { roomId, status: 'online' });
-    const handleBlur = () => socket.emit(SOCKET_EVENTS.SET_STATUS, { roomId, status: 'away' });
+    const handleFocus = () => socket?.emit(SOCKET_EVENTS.SET_STATUS, { roomId, status: 'online' });
+    const handleBlur = () => socket?.emit(SOCKET_EVENTS.SET_STATUS, { roomId, status: 'away' });
 
     window.addEventListener('focus', handleFocus);
     window.addEventListener('blur', handleBlur);
@@ -71,10 +71,10 @@ const Lobby: React.FC = () => {
       setRoom(updatedRoom);
     };
 
-    socket.on(SOCKET_EVENTS.ROOM_UPDATE, handleRoomUpdate);
+    socket?.on(SOCKET_EVENTS.ROOM_UPDATE, handleRoomUpdate);
 
     return () => {
-      socket.off(SOCKET_EVENTS.ROOM_UPDATE, handleRoomUpdate);
+      socket?.off(SOCKET_EVENTS.ROOM_UPDATE, handleRoomUpdate);
     };
   }, [socket, navigate, room]);
 
@@ -89,16 +89,16 @@ const Lobby: React.FC = () => {
   const leaveRoom = () => {
     playClick();
     sessionStorage.removeItem('ludo_session_id');
-    socket.disconnect();
+    socket?.disconnect();
     setTimeout(() => {
-      socket.connect();
+      socket?.connect();
       navigate('/');
     }, 100);
   };
 
   const startGame = () => {
     playClick();
-    socket.emit(SOCKET_EVENTS.START_GAME, { roomId }, (response: any) => {
+    socket?.emit(SOCKET_EVENTS.START_GAME, { roomId }, (response: any) => {
       if (!response.success) {
         alert(response.message);
       }
@@ -107,7 +107,7 @@ const Lobby: React.FC = () => {
 
   const toggleReady = () => {
     playClick();
-    socket.emit(SOCKET_EVENTS.TOGGLE_READY, { roomId });
+    socket?.emit(SOCKET_EVENTS.TOGGLE_READY, { roomId });
   };
 
   const cycleAvatar = (direction: 'next' | 'prev') => {
@@ -118,13 +118,13 @@ const Lobby: React.FC = () => {
     if (nextIndex >= AVATARS.length) nextIndex = 0;
     if (nextIndex < 0) nextIndex = AVATARS.length - 1;
     
-    socket.emit(SOCKET_EVENTS.SET_AVATAR, { roomId, avatar: AVATARS[nextIndex] });
+    socket?.emit(SOCKET_EVENTS.SET_AVATAR, { roomId, avatar: AVATARS[nextIndex] });
   };
 
   if (!room) return null;
 
   if (room.status === 'playing') {
-    return <GameView room={room} mySessionId={mySessionId} />;
+    return <GameView room={room} mySessionId={mySessionId || ''} />;
   }
 
   const players = room.players || [];

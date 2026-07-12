@@ -1,4 +1,4 @@
-import React from 'react';
+// Privacy.jsx
 import { motion } from 'framer-motion';
 import { Shield, ServerOff, Clock, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

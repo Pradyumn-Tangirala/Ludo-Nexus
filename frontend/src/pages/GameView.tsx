@@ -83,8 +83,8 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
       }, 3000);
     };
 
-    socket.on(SOCKET_EVENTS.REACTION, handleReaction);
-    return () => socket.off(SOCKET_EVENTS.REACTION, handleReaction);
+    socket?.on(SOCKET_EVENTS.REACTION, handleReaction);
+    return () => { socket?.off(SOCKET_EVENTS.REACTION, handleReaction); };
   }, [socket, room.players]);
   
   const prevRollCount = React.useRef(gameState?.rollCount || 0);
@@ -201,7 +201,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
     if (!canRoll) return;
     playClick();
     setRolling(true);
-    socket.emit(SOCKET_EVENTS.ROLL_DICE, { roomId: room.id }, (response: any) => {
+    socket?.emit(SOCKET_EVENTS.ROLL_DICE, { roomId: room.id }, (response: any) => {
       setRolling(false);
       if (!response.success) {
         console.error(response.message);
@@ -213,7 +213,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
     if (color !== myColor || !legalMoves.includes(tokenIndex)) return;
     playClick();
     
-    socket.emit(SOCKET_EVENTS.MOVE_TOKEN, { roomId: room.id, tokenIndex }, (response: any) => {
+    socket?.emit(SOCKET_EVENTS.MOVE_TOKEN, { roomId: room.id, tokenIndex }, (response: any) => {
       if (!response.success) {
         console.error(response.message);
       }
@@ -222,13 +222,13 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
   
   const handleRematch = useCallback(() => {
     playClick();
-    socket.emit(SOCKET_EVENTS.REMATCH, { roomId: room.id });
+    socket?.emit(SOCKET_EVENTS.REMATCH, { roomId: room.id });
   }, [socket, room.id, playClick]);
 
   const sendReaction = useCallback((emoji: string) => {
     playClick();
+    socket?.emit(SOCKET_EVENTS.REACTION, { roomId: room.id, emoji });
     setShowEmojiMenu(false);
-    socket.emit(SOCKET_EVENTS.SEND_REACTION, { roomId: room.id, emoji });
   }, [socket, room.id, playClick]);
 
   const renderedTokens = useMemo(() => {
@@ -409,9 +409,9 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
                     style={{
                       width: '50px', height: '50px',
                       borderRadius: '50%',
-                      background: color,
+                      background: color || 'gray',
                       border: isActive ? '4px solid white' : '2px solid transparent',
-                      boxShadow: isActive ? `0 0 15px ${color}` : 'none',
+                      boxShadow: isActive ? `0 0 15px ${color || 'gray'}` : 'none',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: 'white', fontWeight: 'bold', fontSize: '1.2rem',
                       overflow: 'hidden'
@@ -496,8 +496,8 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
                       key={emoji}
                       onClick={() => sendReaction(emoji)}
                       style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px' }}
-                      onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
-                      onMouseOut={(e) => e.target.style.background = 'transparent'}
+                      onMouseOver={(e) => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.1)'}
+                      onMouseOut={(e) => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                     >
                       {emoji}
                     </button>
