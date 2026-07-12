@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Board from '../components/Board';
 import Token from '../components/Token';
@@ -107,7 +107,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
     };
   }, [displayTurn]);
 
-  const getLegalMoves = () => {
+  const getLegalMoves = useCallback(() => {
     if (!isMyTurn || !gameState.awaitingMove || !gameState.lastRoll || gameState.winner || isVisualRolling) return [];
     
     const tokens = gameState.players[myColor as PlayerColor];
@@ -123,41 +123,41 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
         }
     }
     return moves;
-  };
+  }, [gameState, isMyTurn, myColor, isVisualRolling]);
   
-  const legalMoves = getLegalMoves();
+  const legalMoves = useMemo(() => getLegalMoves(), [getLegalMoves]);
 
-  const handleRollDice = () => {
+  const handleRollDice = useCallback(() => {
     if (!canRoll) return;
     setRolling(true);
-    socket.emit(SOCKET_EVENTS.ROLL_DICE, { roomId: room.id }, (response) => {
+    socket.emit(SOCKET_EVENTS.ROLL_DICE, { roomId: room.id }, (response: any) => {
       setRolling(false);
       if (!response.success) {
         console.error(response.message);
       }
     });
-  };
+  }, [canRoll, socket, room.id]);
 
-  const handleMoveToken = (color: PlayerColor, tokenIndex: number) => {
+  const handleMoveToken = useCallback((color: PlayerColor, tokenIndex: number) => {
     if (color !== myColor || !legalMoves.includes(tokenIndex)) return;
     
-    socket.emit(SOCKET_EVENTS.MOVE_TOKEN, { roomId: room.id, tokenIndex }, (response) => {
+    socket.emit(SOCKET_EVENTS.MOVE_TOKEN, { roomId: room.id, tokenIndex }, (response: any) => {
       if (!response.success) {
         console.error(response.message);
       }
     });
-  };
+  }, [myColor, legalMoves, socket, room.id]);
   
-  const handleRematch = () => {
+  const handleRematch = useCallback(() => {
     socket.emit(SOCKET_EVENTS.REMATCH, { roomId: room.id });
-  };
+  }, [socket, room.id]);
 
-  const sendReaction = (emoji) => {
+  const sendReaction = useCallback((emoji: string) => {
     setShowEmojiMenu(false);
     socket.emit(SOCKET_EVENTS.SEND_REACTION, { roomId: room.id, emoji });
-  };
+  }, [socket, room.id]);
 
-  const renderTokens = () => {
+  const renderedTokens = useMemo(() => {
     const tokens: React.ReactNode[] = [];
     Object.entries(gameState.players).forEach(([colorStr, playerTokens]) => {
       const color = colorStr as PlayerColor;
@@ -180,7 +180,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
       });
     });
     return tokens;
-  };
+  }, [gameState.players, myColor, legalMoves, handleMoveToken]);
 
   const getWinnerName = () => {
     if (!gameState.winner) return '';
@@ -274,7 +274,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Board players={room.players}>
-          {renderTokens()}
+          {renderedTokens}
         </Board>
       </div>
       

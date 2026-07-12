@@ -18,6 +18,10 @@ const io = new Server(server, {
     },
 });
 
+// Security: In-memory Rate Limiters
+const joinAttempts = new Map();
+const lastRollTimes = new Map();
+
 // Map socket id to session id for easy lookup on disconnect
 const socketSessionMap = new Map();
 
@@ -40,6 +44,13 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
 
     socket.on(SOCKET_EVENTS.CREATE_ROOM, ({ username }, callback) => {
         try {
+            const now = Date.now();
+            const lastAttempt = joinAttempts.get(socket.id) || 0;
+            if (now - lastAttempt < 2000) {
+                throw new Error('Please wait before creating another room.');
+            }
+            joinAttempts.set(socket.id, now);
+
             const { room, sessionId } = roomManager.createRoom(username);
             socketSessionMap.set(socket.id, sessionId);
             socket.join(room.id);
@@ -56,6 +67,13 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
 
     socket.on(SOCKET_EVENTS.JOIN_ROOM, ({ roomId, username }, callback) => {
         try {
+            const now = Date.now();
+            const lastAttempt = joinAttempts.get(socket.id) || 0;
+            if (now - lastAttempt < 2000) {
+                throw new Error('Please wait before joining a room.');
+            }
+            joinAttempts.set(socket.id, now);
+
             const upperRoomId = roomId.toUpperCase();
             const { room, sessionId } = roomManager.joinRoom(upperRoomId, username);
             socketSessionMap.set(socket.id, sessionId);
@@ -90,6 +108,13 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
     socket.on(SOCKET_EVENTS.ROLL_DICE, ({ roomId }, callback) => {
         try {
             const sessionId = socketSessionMap.get(socket.id);
+            const now = Date.now();
+            const lastRoll = lastRollTimes.get(sessionId) || 0;
+            if (now - lastRoll < 1000) {
+                throw new Error('Dice rolling is rate-limited. Please wait.');
+            }
+            lastRollTimes.set(sessionId, now);
+
             const { room, roll } = roomManager.rollDice(roomId, sessionId);
             if (typeof callback === 'function') callback({ success: true, roll });
             io.to(roomId).emit(SOCKET_EVENTS.ROOM_UPDATE, roomManager.cleanRoomForClient(room));
@@ -136,6 +161,7 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
 
     socket.on(SOCKET_EVENTS.DISCONNECT, () => {
         console.log(`Socket disconnected: ${socket.id}`);
+        joinAttempts.delete(socket.id);
         const sessionId = socketSessionMap.get(socket.id);
         if (sessionId) {
             roomManager.handleDisconnect(sessionId, io);

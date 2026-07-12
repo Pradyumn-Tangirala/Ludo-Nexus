@@ -21,6 +21,15 @@ class RoomManager {
         return crypto.randomUUID ? crypto.randomUUID() : this.generateId(16);
     }
 
+    sanitizeUsername(name) {
+        if (typeof name !== 'string') return 'Player';
+        let sanitized = name.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+        if (sanitized.length > 15) {
+            sanitized = sanitized.substring(0, 15);
+        }
+        return sanitized.length > 0 ? sanitized : 'Player';
+    }
+
     createRoom(hostName) {
         let roomId;
         do {
@@ -34,7 +43,7 @@ class RoomManager {
             players: [
                 {
                     sessionId: hostSessionId,
-                    name: hostName,
+                    name: this.sanitizeUsername(hostName),
                     isHost: true,
                     status: 'online', // online, offline
                     color: null,
@@ -55,12 +64,12 @@ class RoomManager {
         const room = this.rooms.get(roomId);
         if (!room) throw new Error('Room not found');
         if (room.status !== 'waiting') throw new Error('Game already started');
-        if (room.players.length >= room.maxPlayers) throw new Error('Room is full');
+        if (room.players.length >= room.maxPlayers || room.players.length >= 4) throw new Error('Room is full');
 
         const sessionId = this.generateSessionId();
         room.players.push({
             sessionId,
-            name: playerName,
+            name: this.sanitizeUsername(playerName),
             isHost: false,
             status: 'online',
             color: null,
