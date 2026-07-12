@@ -11,6 +11,10 @@ const SOCKET_EVENTS = {
     REMATCH: 'rematch',
     SEND_REACTION: 'send_reaction',
     REACTION: 'reaction',
+    TOGGLE_READY: 'toggle_ready',
+    SET_AVATAR: 'set_avatar',
+    SET_STATUS: 'set_status',
+    PING: 'ping',
 };
 
 module.exports = { SOCKET_EVENTS };

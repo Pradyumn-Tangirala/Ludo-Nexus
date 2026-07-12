@@ -159,6 +159,53 @@ io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
         }
     });
 
+    socket.on(SOCKET_EVENTS.TOGGLE_READY, ({ roomId }) => {
+        try {
+            const sessionId = socketSessionMap.get(socket.id);
+            if (sessionId) {
+                const room = roomManager.toggleReady(roomId, sessionId);
+                io.to(roomId).emit(SOCKET_EVENTS.ROOM_UPDATE, roomManager.cleanRoomForClient(room));
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    socket.on(SOCKET_EVENTS.SET_AVATAR, ({ roomId, avatar }) => {
+        try {
+            const sessionId = socketSessionMap.get(socket.id);
+            if (sessionId) {
+                const room = roomManager.setAvatar(roomId, sessionId, avatar);
+                io.to(roomId).emit(SOCKET_EVENTS.ROOM_UPDATE, roomManager.cleanRoomForClient(room));
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    socket.on(SOCKET_EVENTS.SET_STATUS, ({ roomId, status }) => {
+        try {
+            const sessionId = socketSessionMap.get(socket.id);
+            if (sessionId) {
+                const room = roomManager.setStatus(roomId, sessionId, status);
+                if (room) {
+                    io.to(roomId).emit(
+                        SOCKET_EVENTS.ROOM_UPDATE,
+                        roomManager.cleanRoomForClient(room),
+                    );
+                }
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    socket.on(SOCKET_EVENTS.PING, (clientTime, callback) => {
+        if (typeof callback === 'function') {
+            callback(clientTime);
+        }
+    });
+
     socket.on(SOCKET_EVENTS.DISCONNECT, () => {
         console.log(`Socket disconnected: ${socket.id}`);
         joinAttempts.delete(socket.id);

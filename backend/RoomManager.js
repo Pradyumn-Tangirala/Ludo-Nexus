@@ -45,8 +45,10 @@ class RoomManager {
                     sessionId: hostSessionId,
                     name: this.sanitizeUsername(hostName),
                     isHost: true,
-                    status: 'online', // online, offline
+                    status: 'online', // online, offline, away
                     color: null,
+                    isReady: false,
+                    avatar: 'bottts:1',
                 },
             ],
             status: 'waiting', // waiting, playing
@@ -72,8 +74,10 @@ class RoomManager {
             sessionId,
             name: this.sanitizeUsername(playerName),
             isHost: false,
-            status: 'online',
+            status: 'online', // online, offline, away
             color: null,
+            isReady: false,
+            avatar: `bottts:${Math.floor(Math.random() * 100)}`,
         });
 
         this._clearRoomTimeout(roomId);
@@ -158,6 +162,10 @@ class RoomManager {
         const player = room.players.find((p) => p.sessionId === sessionId);
         if (!player || !player.isHost) throw new Error('Only the host can start the game');
 
+        // Check global readiness
+        const allReady = room.players.every((p) => p.isReady);
+        if (!allReady) throw new Error('All players must be ready to start the game');
+
         room.status = 'playing';
 
         // Assign colors based on player count
@@ -179,6 +187,42 @@ class RoomManager {
 
         const roll = room.engine.rollDice();
         return { roll, room };
+    }
+
+    toggleReady(roomId, sessionId) {
+        const room = this.rooms.get(roomId);
+        if (!room) throw new Error('Room not found');
+
+        const player = room.players.find((p) => p.sessionId === sessionId);
+        if (!player) throw new Error('Player not found');
+
+        player.isReady = !player.isReady;
+        return room;
+    }
+
+    setAvatar(roomId, sessionId, avatarId) {
+        const room = this.rooms.get(roomId);
+        if (!room) throw new Error('Room not found');
+
+        const player = room.players.find((p) => p.sessionId === sessionId);
+        if (!player) throw new Error('Player not found');
+
+        player.avatar = avatarId;
+        return room;
+    }
+
+    setStatus(roomId, sessionId, status) {
+        const room = this.rooms.get(roomId);
+        if (!room) return null;
+
+        const player = room.players.find((p) => p.sessionId === sessionId);
+        if (!player) return null;
+
+        // Don't override 'offline' with 'away'
+        if (player.status !== 'offline') {
+            player.status = status;
+        }
+        return room;
     }
 
     moveToken(roomId, sessionId, tokenIndex) {
@@ -231,6 +275,8 @@ class RoomManager {
                 isHost: p.isHost,
                 status: p.status,
                 color: p.color,
+                isReady: p.isReady,
+                avatar: p.avatar,
             })),
             gameState: room.engine ? room.engine.getState() : null,
         };
