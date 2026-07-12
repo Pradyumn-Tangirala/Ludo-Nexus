@@ -6,6 +6,8 @@ import { getCoordinates } from '../utils/ludoCoordinates';
 import { useSocket } from '../context/SocketContext';
 import { Dices, RotateCcw, Smile } from 'lucide-react';
 import Dice from '../components/Dice';
+import confetti from 'canvas-confetti';
+import { useSoundEffects } from '../hooks/useSoundEffects';
 import { Room, PlayerColor } from '../types/game';
 import { ReactionPayload } from '../types/socket';
 import { WIN_PROGRESS, EXTRA_TURN_VALUE } from '../constants/game';
@@ -24,6 +26,8 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
   const [displayTurn, setDisplayTurn] = useState<PlayerColor | undefined | null>(room.gameState?.turn);
   const [floatingEmojis, setFloatingEmojis] = useState<{id: string, emoji: string, left: number, bottom: number}[]>([]);
   const [showEmojiMenu, setShowEmojiMenu] = useState(false);
+  
+  const { playClick, playDiceRoll, playCapture, playVictory } = useSoundEffects();
   
   if (!gameState) return <div>Loading game state...</div>;
 
@@ -90,6 +94,65 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
       }
   }, [gameState?.rollCount, gameState?.turn, isVisualRolling]);
 
+  // Victory Confetti
+  useEffect(() => {
+    if (gameState?.winner) {
+      playVictory();
+      
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#ef4444', '#10b981', '#eab308', '#3b82f6']
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#ef4444', '#10b981', '#eab308', '#3b82f6']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+  }, [gameState?.winner, playVictory]);
+
+  // Sound Effects Tracking
+  const prevPlayersRef = React.useRef(gameState?.players);
+  useEffect(() => {
+    if (!gameState?.players || !prevPlayersRef.current) return;
+    
+    let captured = false;
+    let homed = false;
+
+    Object.entries(gameState.players).forEach(([color, tokens]) => {
+      const prevTokens = prevPlayersRef.current![color as PlayerColor];
+      tokens.forEach((progress, i) => {
+        const prevProgress = prevTokens[i];
+        if (prevProgress > -1 && progress === -1) {
+          captured = true;
+        }
+        if (prevProgress < WIN_PROGRESS && progress === WIN_PROGRESS) {
+          homed = true;
+        }
+      });
+    });
+
+    if (captured) playCapture();
+    if (homed && !gameState.winner) playClick(); // using click/chime for entering home
+
+    prevPlayersRef.current = gameState.players;
+  }, [gameState?.players, playCapture, playClick, gameState?.winner]);
+
   // Dynamic background color based on current turn
   useEffect(() => {
     const bgColors = {
@@ -129,6 +192,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
 
   const handleRollDice = useCallback(() => {
     if (!canRoll) return;
+    playClick();
     setRolling(true);
     socket.emit(SOCKET_EVENTS.ROLL_DICE, { roomId: room.id }, (response: any) => {
       setRolling(false);
@@ -140,6 +204,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
 
   const handleMoveToken = useCallback((color: PlayerColor, tokenIndex: number) => {
     if (color !== myColor || !legalMoves.includes(tokenIndex)) return;
+    playClick();
     
     socket.emit(SOCKET_EVENTS.MOVE_TOKEN, { roomId: room.id, tokenIndex }, (response: any) => {
       if (!response.success) {
@@ -149,13 +214,15 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
   }, [myColor, legalMoves, socket, room.id]);
   
   const handleRematch = useCallback(() => {
+    playClick();
     socket.emit(SOCKET_EVENTS.REMATCH, { roomId: room.id });
-  }, [socket, room.id]);
+  }, [socket, room.id, playClick]);
 
   const sendReaction = useCallback((emoji: string) => {
+    playClick();
     setShowEmojiMenu(false);
     socket.emit(SOCKET_EVENTS.SEND_REACTION, { roomId: room.id, emoji });
-  }, [socket, room.id]);
+  }, [socket, room.id, playClick]);
 
   const renderedTokens = useMemo(() => {
     const tokens: React.ReactNode[] = [];
@@ -347,6 +414,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
               roll={gameState.lastRoll} 
               rollCount={gameState.rollCount} 
               onVisualRollEnd={() => setIsVisualRolling(false)} 
+              playDiceSound={playDiceRoll}
             />
           )}
           

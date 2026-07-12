@@ -64,7 +64,8 @@ class RoomManager {
         const room = this.rooms.get(roomId);
         if (!room) throw new Error('Room not found');
         if (room.status !== 'waiting') throw new Error('Game already started');
-        if (room.players.length >= room.maxPlayers || room.players.length >= 4) throw new Error('Room is full');
+        if (room.players.length >= room.maxPlayers || room.players.length >= 4)
+            throw new Error('Room is full');
 
         const sessionId = this.generateSessionId();
         room.players.push({

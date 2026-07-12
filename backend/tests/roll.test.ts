@@ -35,7 +35,7 @@ describe('RollManager', () => {
     it('should throw an error if awaitingMove is true', () => {
         mockState.awaitingMove = true;
         expect(() => RollManager.rollDice(mockState, turnOrder)).toThrowError(
-            "Must move a token before rolling again."
+            'Must move a token before rolling again.',
         );
     });
 
@@ -58,14 +58,14 @@ describe('RollManager', () => {
 
     it('should automatically advance turn if no legal moves exist', () => {
         // Mock Math.random to return a 2
-        vi.spyOn(Math, 'random').mockReturnValue(0.1); 
+        vi.spyOn(Math, 'random').mockReturnValue(0.1);
         // 0.1 * 6 = 0.6 -> floor + 1 = 1 (Wait, let's just mock getLegalMoves instead)
-        
+
         vi.spyOn(MoveValidator, 'getLegalMoves').mockReturnValue([]);
         const nextTurnSpy = vi.spyOn(TurnManager, 'nextTurn');
 
         const roll = RollManager.rollDice(mockState, turnOrder);
-        
+
         expect(mockState.awaitingMove).toBe(false);
         expect(nextTurnSpy).toHaveBeenCalledWith(mockState, turnOrder);
 

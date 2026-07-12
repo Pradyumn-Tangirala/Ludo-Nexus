@@ -6,60 +6,142 @@ interface DiceProps {
   roll: number | null;
   rollCount: number;
   onVisualRollEnd?: () => void;
+  playDiceSound?: () => void;
 }
 
-const Dice: React.FC<DiceProps> = ({ roll, rollCount, onVisualRollEnd }) => {
+const Dice: React.FC<DiceProps> = ({ roll, rollCount, onVisualRollEnd, playDiceSound }) => {
   const [visualRoll, setVisualRoll] = useState(roll || 1);
-  const [isRolling, setIsRolling] = useState(false);
   const controls = useAnimation();
+
+  // Face rotation mappings to ensure the correct number faces front (rotateX, rotateY)
+  const faceRotations: Record<number, { x: number, y: number }> = {
+    1: { x: 0, y: 0 },
+    2: { x: 0, y: -90 },
+    3: { x: 0, y: 90 },
+    4: { x: -90, y: 0 },
+    5: { x: 90, y: 0 },
+    6: { x: 180, y: 0 },
+  };
 
   useEffect(() => {
     if (rollCount > 0 && roll) {
-      // Start rolling animation
-      setIsRolling(true);
-      let interval: NodeJS.Timeout;
+      if (playDiceSound) playDiceSound();
       
-      // Shake animation
+      const targetRotation = faceRotations[roll] || faceRotations[1];
+      
+      // Add extra spins for dramatic effect
+      const extraSpinsX = Math.floor(Math.random() * 2 + 2) * 360; 
+      const extraSpinsY = Math.floor(Math.random() * 2 + 2) * 360;
+      
       controls.start({
-        rotate: [0, -20, 20, -20, 20, 0],
-        scale: [1, 1.2, 1],
-        transition: { duration: 0.5 }
-      });
-      
-      // Rapidly change number
-      interval = setInterval(() => {
-        setVisualRoll(Math.floor(Math.random() * EXTRA_TURN_VALUE) + 1);
-      }, 50);
-
-      // Stop after 500ms and show actual roll
-      setTimeout(() => {
-        clearInterval(interval);
+        rotateX: targetRotation.x + extraSpinsX,
+        rotateY: targetRotation.y + extraSpinsY,
+        z: [0, 100, 50, 0], // Bounce effect
+        transition: { 
+          duration: 0.8, 
+          ease: "easeOut",
+        }
+      }).then(() => {
         setVisualRoll(roll);
-        setIsRolling(false);
         if (onVisualRollEnd) onVisualRollEnd();
-      }, 500);
+      });
 
-      return () => clearInterval(interval);
     } else {
-        setVisualRoll(roll || EXTRA_TURN_VALUE); // default to EXTRA_TURN_VALUE if no roll yet
+      const initRot = faceRotations[roll || 1];
+      controls.set({ rotateX: initRot.x, rotateY: initRot.y });
+      setVisualRoll(roll || 1);
     }
-  }, [rollCount, roll, controls, onVisualRollEnd]);
+  }, [rollCount, roll, controls, onVisualRollEnd, playDiceSound]);
+
+  const dotStyle = {
+    background: '#333',
+    borderRadius: '50%',
+    width: '12px',
+    height: '12px',
+  };
+
+  const faceStyle: React.CSSProperties = {
+    position: 'absolute',
+    width: '60px',
+    height: '60px',
+    background: 'white',
+    border: '2px solid #ccc',
+    borderRadius: '8px',
+    boxShadow: 'inset 0 0 10px rgba(0,0,0,0.1)',
+    display: 'grid',
+    padding: '8px',
+    boxSizing: 'border-box'
+  };
+
+  // Face layouts
+  const Face1 = () => (
+    <div style={{ ...faceStyle, transform: 'translateZ(30px)', placeItems: 'center' }}>
+      <div style={dotStyle} />
+    </div>
+  );
+  
+  const Face2 = () => (
+    <div style={{ ...faceStyle, transform: 'rotateY(90deg) translateZ(30px)', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
+      <div style={{...dotStyle, alignSelf: 'start', justifySelf: 'start'}} />
+      <div />
+      <div />
+      <div style={{...dotStyle, alignSelf: 'end', justifySelf: 'end'}} />
+    </div>
+  );
+
+  const Face3 = () => (
+    <div style={{ ...faceStyle, transform: 'rotateY(-90deg) translateZ(30px)', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr 1fr' }}>
+      <div style={{...dotStyle, alignSelf: 'start', justifySelf: 'start'}} />
+      <div /><div /><div />
+      <div style={{...dotStyle, alignSelf: 'center', justifySelf: 'center'}} />
+      <div /><div /><div />
+      <div style={{...dotStyle, alignSelf: 'end', justifySelf: 'end'}} />
+    </div>
+  );
+
+  const Face4 = () => (
+    <div style={{ ...faceStyle, transform: 'rotateX(90deg) translateZ(30px)', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', placeItems: 'center' }}>
+      <div style={dotStyle} /><div style={dotStyle} />
+      <div style={dotStyle} /><div style={dotStyle} />
+    </div>
+  );
+
+  const Face5 = () => (
+    <div style={{ ...faceStyle, transform: 'rotateX(-90deg) translateZ(30px)', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr 1fr', placeItems: 'center' }}>
+      <div style={dotStyle} /><div /><div style={dotStyle} />
+      <div /><div style={dotStyle} /><div />
+      <div style={dotStyle} /><div /><div style={dotStyle} />
+    </div>
+  );
+
+  const Face6 = () => (
+    <div style={{ ...faceStyle, transform: 'rotateX(180deg) translateZ(30px)', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr 1fr', placeItems: 'center' }}>
+      <div style={dotStyle} /><div style={dotStyle} />
+      <div style={dotStyle} /><div style={dotStyle} />
+      <div style={dotStyle} /><div style={dotStyle} />
+    </div>
+  );
 
   return (
-    <motion.div 
-      animate={controls}
-      style={{ 
-        width: '50px', height: '50px', 
-        background: 'white', color: '#333', 
-        borderRadius: '12px', display: 'flex', 
-        alignItems: 'center', justifyContent: 'center',
-        fontSize: '1.8rem', fontWeight: 'bold',
-        boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
-        userSelect: 'none'
-      }}
-    >
-      {visualRoll}
-    </motion.div>
+    <div style={{ perspective: '600px', width: '60px', height: '60px', marginRight: '20px' }}>
+      <motion.div 
+        animate={controls}
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          position: 'relative',
+          transformStyle: 'preserve-3d',
+          transformOrigin: 'center center'
+        }}
+      >
+        <Face1 />
+        <Face2 />
+        <Face3 />
+        <Face4 />
+        <Face5 />
+        <Face6 />
+      </motion.div>
+    </div>
   );
 };
 
