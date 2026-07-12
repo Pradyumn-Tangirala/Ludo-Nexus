@@ -378,7 +378,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
           {room.players.map(p => {
             const color = p.color;
-            const isActive = gameState.turn === color;
+            const isActive = displayTurn === color;
             
             let disconnectProgress = 0;
             let showDisconnect = false;
@@ -429,7 +429,7 @@ const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
                   </div>
                   
                   {/* AFK Timer Bar */}
-                  {isActive && turnRemaining > 0 && (
+                  {isActive && turnRemaining > 0 && !isVisualRolling && (
                     <div style={{ position: 'absolute', bottom: '-10px', left: 0, width: '100%', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden' }}>
                       <div style={{ height: '100%', background: turnProgress < 25 ? '#ef4444' : '#10b981', width: `${turnProgress}%`, transition: 'width 0.1s linear' }} />
                     </div>
