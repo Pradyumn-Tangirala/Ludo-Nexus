@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import './Board.css';
+import { PlayerData, PlayerColor } from '../types/game';
 
-const Board = ({ children, players = [] }) => {
-  const getPlayerName = (color) => {
+interface BoardProps {
+  children?: ReactNode;
+  players?: PlayerData[];
+}
+
+const Board: React.FC<BoardProps> = ({ children, players = [] }) => {
+  const getPlayerName = (color: PlayerColor | string) => {
     const player = players.find(p => p.color === color);
     return player ? player.name : '';
   };

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 
-const Dice = ({ roll, rollCount, onVisualRollEnd }) => {
+interface DiceProps {
+  roll: number | null;
+  rollCount: number;
+  onVisualRollEnd?: () => void;
+}
+
+const Dice: React.FC<DiceProps> = ({ roll, rollCount, onVisualRollEnd }) => {
   const [visualRoll, setVisualRoll] = useState(roll || 1);
   const [isRolling, setIsRolling] = useState(false);
   const controls = useAnimation();
@@ -10,7 +16,7 @@ const Dice = ({ roll, rollCount, onVisualRollEnd }) => {
     if (rollCount > 0 && roll) {
       // Start rolling animation
       setIsRolling(true);
-      let interval;
+      let interval: NodeJS.Timeout;
       
       // Shake animation
       controls.start({

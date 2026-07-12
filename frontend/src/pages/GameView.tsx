@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Board from './Board';
-import Token from './Token';
+import Board from '../components/Board';
+import Token from '../components/Token';
 import { getCoordinates } from '../utils/ludoCoordinates';
-import { useSocket } from '../SocketContext';
+import { useSocket } from '../context/SocketContext';
 import { Dices, RotateCcw, Smile } from 'lucide-react';
-import Dice from './Dice';
+import Dice from '../components/Dice';
+import { Room, PlayerColor } from '../types/game';
+import { ReactionPayload } from '../types/socket';
 
-const GameView = ({ room, mySessionId }) => {
+interface GameViewProps {
+  room: Room;
+  mySessionId: string;
+}
+
+const GameView: React.FC<GameViewProps> = ({ room, mySessionId }) => {
   const socket = useSocket();
   const gameState = room.gameState;
   const [rolling, setRolling] = useState(false);
   const [isVisualRolling, setIsVisualRolling] = useState(false);
-  const [displayTurn, setDisplayTurn] = useState(room.gameState?.turn);
-  const [floatingEmojis, setFloatingEmojis] = useState([]);
+  const [displayTurn, setDisplayTurn] = useState<PlayerColor | undefined | null>(room.gameState?.turn);
+  const [floatingEmojis, setFloatingEmojis] = useState<{id: string, emoji: string, left: number, bottom: number}[]>([]);
   const [showEmojiMenu, setShowEmojiMenu] = useState(false);
   
   if (!gameState) return <div>Loading game state...</div>;
@@ -28,7 +35,7 @@ const GameView = ({ room, mySessionId }) => {
   useEffect(() => {
     if (!socket) return;
     
-    const handleReaction = ({ emoji, playerId }) => {
+    const handleReaction = ({ emoji, playerId }: ReactionPayload) => {
       const sender = room.players.find(p => p.id === playerId);
       const color = sender ? sender.color : null;
       
@@ -101,9 +108,9 @@ const GameView = ({ room, mySessionId }) => {
   const getLegalMoves = () => {
     if (!isMyTurn || !gameState.awaitingMove || !gameState.lastRoll || gameState.winner || isVisualRolling) return [];
     
-    const tokens = gameState.players[myColor];
+    const tokens = gameState.players[myColor as PlayerColor];
     const roll = gameState.lastRoll;
-    const moves = [];
+    const moves: number[] = [];
     
     for (let i = 0; i < tokens.length; i++) {
         const progress = tokens[i];
@@ -129,7 +136,7 @@ const GameView = ({ room, mySessionId }) => {
     });
   };
 
-  const handleMoveToken = (color, tokenIndex) => {
+  const handleMoveToken = (color: PlayerColor, tokenIndex: number) => {
     if (color !== myColor || !legalMoves.includes(tokenIndex)) return;
     
     socket.emit('move_token', { roomId: room.id, tokenIndex }, (response) => {
@@ -149,8 +156,9 @@ const GameView = ({ room, mySessionId }) => {
   };
 
   const renderTokens = () => {
-    const tokens = [];
-    Object.entries(gameState.players).forEach(([color, playerTokens]) => {
+    const tokens: React.ReactNode[] = [];
+    Object.entries(gameState.players).forEach(([colorStr, playerTokens]) => {
+      const color = colorStr as PlayerColor;
       playerTokens.forEach((progress, idx) => {
         const { x, y, offset } = getCoordinates(color, progress, idx, gameState.players);
         const isMovable = color === myColor && legalMoves.includes(idx);
@@ -178,7 +186,8 @@ const GameView = ({ room, mySessionId }) => {
     return winnerPlayer ? winnerPlayer.name : gameState.winner;
   };
 
-  const getPlayerNameByColor = (color) => {
+  const getPlayerNameByColor = (color: PlayerColor | undefined | null) => {
+    if (!color) return '';
     const player = room.players.find(p => p.color === color);
     return player ? player.name : color;
   };

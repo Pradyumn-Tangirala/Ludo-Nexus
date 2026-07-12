@@ -1,14 +1,14 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { io, Socket } from 'socket.io-client';
 
-const SocketContext = createContext();
+const SocketContext = createContext<Socket | null>(null);
 
 export const useSocket = () => {
   return useContext(SocketContext);
 };
 
-export const SocketProvider = ({ children }) => {
-  const [socket, setSocket] = useState(null);
+export const SocketProvider = ({ children }: { children: ReactNode }) => {
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
     // Use environment variable or default to the same origin (for production) or localhost:3001 (for dev fallback)

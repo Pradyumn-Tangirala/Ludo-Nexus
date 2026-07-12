@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { SocketProvider } from './SocketContext';
+import { SocketProvider } from './context/SocketContext';
 import Landing from './components/Landing';
 import Lobby from './components/Lobby';
 import Privacy from './components/Privacy';

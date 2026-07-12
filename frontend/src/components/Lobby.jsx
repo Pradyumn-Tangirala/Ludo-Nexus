@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSocket } from '../SocketContext';
+import { useSocket } from "../context/SocketContext";
 import { Users, Copy, CheckCircle, LogOut, Crown, WifiOff } from 'lucide-react';
-import GameView from './GameView';
+import GameView from "../pages/GameView";
 
 const Lobby = () => {
   const { roomId } = useParams();
