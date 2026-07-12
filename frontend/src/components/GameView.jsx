@@ -67,19 +67,19 @@ const GameView = ({ room, mySessionId }) => {
     return () => socket.off('reaction', handleReaction);
   }, [socket, room.players]);
   
-  // Watch for new rolls to block interactions while visually rolling
-  useEffect(() => {
-      if (gameState?.rollCount > 0) {
-          setIsVisualRolling(true);
-      }
-  }, [gameState?.rollCount]);
+  const prevRollCount = React.useRef(gameState?.rollCount || 0);
 
-  // Update displayTurn only when not visually rolling
+  // Safely manage visual state and turn display
   useEffect(() => {
-      if (!isVisualRolling && gameState?.turn) {
+      const isNewRoll = gameState?.rollCount > prevRollCount.current;
+      
+      if (isNewRoll) {
+          prevRollCount.current = gameState.rollCount;
+          setIsVisualRolling(true);
+      } else if (!isVisualRolling && gameState?.turn) {
           setDisplayTurn(gameState.turn);
       }
-  }, [isVisualRolling, gameState?.turn]);
+  }, [gameState?.rollCount, gameState?.turn, isVisualRolling]);
 
   // Dynamic background color based on current turn
   useEffect(() => {
