@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const LudoEngine = require('./LudoEngine');
+const LudoEngine = require('./GameEngine/LudoEngine').default;
 
 class RoomManager {
     constructor() {
