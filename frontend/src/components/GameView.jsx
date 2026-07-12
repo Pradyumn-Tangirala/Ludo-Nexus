@@ -12,6 +12,7 @@ const GameView = ({ room, mySessionId }) => {
   const gameState = room.gameState;
   const [rolling, setRolling] = useState(false);
   const [isVisualRolling, setIsVisualRolling] = useState(false);
+  const [displayTurn, setDisplayTurn] = useState(room.gameState?.turn);
   const [floatingEmojis, setFloatingEmojis] = useState([]);
   const [showEmojiMenu, setShowEmojiMenu] = useState(false);
   
@@ -72,6 +73,30 @@ const GameView = ({ room, mySessionId }) => {
           setIsVisualRolling(true);
       }
   }, [gameState?.rollCount]);
+
+  // Update displayTurn only when not visually rolling
+  useEffect(() => {
+      if (!isVisualRolling && gameState?.turn) {
+          setDisplayTurn(gameState.turn);
+      }
+  }, [isVisualRolling, gameState?.turn]);
+
+  // Dynamic background color based on current turn
+  useEffect(() => {
+    const bgColors = {
+      red: 'linear-gradient(135deg, #450a0a 0%, #0f172a 100%)',
+      green: 'linear-gradient(135deg, #022c22 0%, #0f172a 100%)',
+      yellow: 'linear-gradient(135deg, #422006 0%, #0f172a 100%)',
+      blue: 'linear-gradient(135deg, #172554 0%, #0f172a 100%)',
+    };
+    
+    document.body.style.background = bgColors[displayTurn] || 'var(--bg-gradient)';
+    document.body.style.transition = 'background 1s ease-in-out';
+    
+    return () => {
+      document.body.style.background = 'var(--bg-gradient)';
+    };
+  }, [displayTurn]);
 
   const getLegalMoves = () => {
     if (!isMyTurn || !gameState.awaitingMove || !gameState.lastRoll || gameState.winner || isVisualRolling) return [];
@@ -263,12 +288,12 @@ const GameView = ({ room, mySessionId }) => {
             <div style={{ 
               fontSize: '1.2rem', 
               fontWeight: 'bold', 
-              color: gameState.turn === 'red' ? '#ef4444' : 
-                     gameState.turn === 'green' ? '#10b981' : 
-                     gameState.turn === 'yellow' ? '#eab308' : '#3b82f6',
+              color: displayTurn === 'red' ? '#ef4444' : 
+                     displayTurn === 'green' ? '#10b981' : 
+                     displayTurn === 'yellow' ? '#eab308' : '#3b82f6',
               textTransform: 'capitalize'
             }}>
-              {getPlayerNameByColor(gameState.turn)} ({gameState.turn}) {isMyTurn ? '(You)' : ''}
+              {getPlayerNameByColor(displayTurn)} ({displayTurn}) {displayTurn === myColor ? '(You)' : ''}
             </div>
           </div>
           
